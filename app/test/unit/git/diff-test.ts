@@ -22,6 +22,7 @@ import {
   getWorkingDirectoryDiff,
   getWorkingDirectoryImage,
   getBlobImage,
+  getBinaryPaths,
 } from '../../../src/lib/git'
 import { getStatusOrThrow } from '../../helpers/status'
 
@@ -382,6 +383,43 @@ describe('git/diff', () => {
 
       const diff = await getTextDiff(repo, files[0])
       expect(diff.text).toBe(`@@ -0,0 +1 @@\n+${testString}`)
+    })
+  })
+
+  describe('getBinaryPaths', () => {
+    describe('in empty repo', () => {
+      let repo: Repository
+      beforeEach(async () => {
+        repo = await setupEmptyRepository()
+      })
+      it('returns an empty array', async () => {
+        expect(await getBinaryPaths(repo)).toHaveLength(0)
+      })
+    })
+    describe('in repo with text only files', () => {
+      let repo: Repository
+      beforeEach(async () => {
+        const testRepoPath = await setupFixtureRepository('repo-with-changes')
+        repo = new Repository(testRepoPath, -1, null, false)
+      })
+      it('returns an empty array', async () => {
+        expect(await getBinaryPaths(repo)).toHaveLength(0)
+      })
+    })
+    describe('in repo with image changes', () => {
+      let repo: Repository
+      beforeEach(async () => {
+        const testRepoPath = await setupFixtureRepository(
+          'repo-with-image-changes'
+        )
+        repo = new Repository(testRepoPath, -1, null, false)
+      })
+      it('returns all changed image files', async () => {
+        expect(await getBinaryPaths(repo)).toEqual([
+          'modified-image.jpg',
+          'new-animated-image.gif',
+        ])
+      })
     })
   })
 })
